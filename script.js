@@ -48,17 +48,30 @@ function getQuote() {
     httpRequest.send(null);
     // event listener for onreadystatechange
     httpRequest.onreadystatechange = displayData;
+    clearTimeout(updateQuote);
+    var updateQuote = setTimeout('getQuote()', 10000);
 }
 //event handler to test data request/retrieval
 function displayData() {
     if (httpRequest.readyState === 4 && httpRequest.status === 200) {
         var stockResults = httpRequest.responseText;
-        var stockItems = stockResults.split(/,|\"/);
-        for (var i = stockItems.length - 1; i >= 0; i--) {
-            if (stockItems[i] === "") {
-                stockItems.splice(i, 1);
-            }
-        }
+        var stockItems = JSON.parse(stockResults);
+        document.getElementById("ticker").innerHTML = stockItems.symbol;
+        document.getElementById("openingPrice").innerHTML = stockItems.open;
+        document.getElementById("lastTrade").innerHTML = stockItems.latestPrice;
+        var date = new Date(stockItems.latestUpdate)
+        document.getElementById("lastTradeDT").innerHTML = date.toDateString() + "<br>" + date.toLocaleDateString();
+        document.getElementById("change").innerHTML = (stockItems.latestPrice - stockItems.open).toFixed(2);
+        document.getElementById("range").innerHTML = "Low " + (stockItems.low * 1).toFixed(2) + "<br>High " + (stockItems.high * 1).toFixed(2);
+        document.getElementById("volume").innerHTML = (stockItems.latestVolume * 1).toLocaleString();
+
+    }
+}
+// function for style of the stock data
+function formatTable() {
+    var rows = document.getElementsByTagName("tr");
+    for (var i = 0; i < rows.length; i = i + 2) {
+        rows[i].style.background = "#9FE098";
     }
 }
 
@@ -66,8 +79,10 @@ function displayData() {
 var form = document.getElementsByTagName("form")[0];
 if (window.addEventListener) {
     form.addEventListener("submit", stopSubmission, false);
+    window.addEventListener("load", formatTable, false);
     window.addEventListener("load", getQuote, false);
 } else if (window.attachEvent) {
     form.attachEvent("onsubmit", stopSubmission);
+    window.attachEvent("onload", formatTable)
     window.attachEvent("onload", getQuote);
 }
